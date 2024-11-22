@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - School Result Platform</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>School Result Platform</h1>
+        <form id="loginForm">
+        <h3>Login</h3>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <p id="message"></p>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                console.log(`Attempting login for username: ${username}`);
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const data = await response.json();
+                console.log('Server response:', data);
+
+                if (response.ok) {
+                    console.log('Login successful');
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+
+                    switch (data.user.role) {
+                        case 'admin':
+                            window.location.href = '/admin-dashboard.html';
+                            break;
+                        case 'teacher':
+                            window.location.href = '/teacher-dashboard.html';
+                            break;
+                        case 'parent':
+                            window.location.href = '/parent-dashboard.html';
+                            break;
+                        case 'student':
+                            window.location.href = '/student-dashboard.html';
+                            break;
+                        default:
+                            window.location.href = '/profile.html';
+                    }
+                } else {
+                    console.error('Login failed:', data.message);
+                    document.getElementById('message').textContent = data.message || 'Login failed. Please try again.';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('message').textContent = 'An error occurred. Please try again.';
+            }
+        });
+    </script>
+</body>
+</html>

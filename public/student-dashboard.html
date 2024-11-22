@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Result Dashboard</title>
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+    --primary-color: #6200ea;
+    --secondary-color: #03dac6;
+    --background-color: #f5f5f5;
+    --text-color: #333333;
+    --card-background: #ffffff;
+    --sidebar-background: #311b92;
+    --sidebar-text: #ffffff;
+    --border-radius: 10px;
+    --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.dashboard-container {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    min-height: 100vh;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    background-color: var(--sidebar-background);
+    color: var(--sidebar-text);
+    padding: 20px;
+    transition: var(--transition);
+}
+
+.left-sidebar {
+    width: 250px;
+}
+
+.left-sidebar.collapsed {
+    width: 80px;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+}
+
+.logo-text {
+    font-size: 1.2rem;
+    transition: var(--transition);
+}
+
+.left-sidebar.collapsed .logo-text {
+    display: none;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: var(--sidebar-text);
+    cursor: pointer;
+    font-size: 24px;
+}
+
+.toggle-icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.nav-items {
+    list-style-type: none;
+}
+
+.nav-items li {
+    margin-bottom: 15px;
+}
+
+.nav-items a {
+    display: flex;
+    align-items: center;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+}
+
+.nav-items a:hover, .nav-items .active a {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    fill: currentColor;
+}
+
+.left-sidebar.collapsed .nav-items a span {
+    display: none;
+}
+
+.left-sidebar.collapsed .nav-items a {
+    justify-content: center;
+}
+
+.left-sidebar.collapsed .icon {
+    margin-right: 0;
+}
+
+/* Main Content Styles */
+.main-wrapper {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.header {
+    background-color: var(--card-background);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--box-shadow);
+}
+
+.welcome-message h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.main-content {
+    padding: 20px;
+}
+
+.dashboard-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.overview-card {
+    background-color: var(--card-background);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    text-align: center;
+}
+
+.overview-card h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.highlight {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.results-overview, .recent-results {
+    background-color: var(--card-background);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin-bottom: 30px;
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.results-table th, .results-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.results-table th {
+    background-color: #f9f9f9;
+    font-weight: 600;
+}
+
+.status {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status.passed {
+    background-color: #c8e6c9;
+    color: #2e7d32;
+}
+
+.status.pending {
+    background-color: #fff9c4;
+    color: #f57f17;
+}
+
+/* Right Sidebar Styles */
+.right-sidebar {
+    width: 300px;
+    background-color: var(--card-background);
+    padding: 20px;
+    border-left: 1px solid #e0e0e0;
+}
+
+.calendar-widget {
+    margin-bottom: 30px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.calendar-header button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--primary-color);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.calendar-day:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.calendar-day.active {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.exam-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.exam-item {
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    text-align: center;
+}
+
+.exam-date {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+@media (max-width: 1200px) {
+    .dashboard-container {
+        grid-template-columns: auto 1fr;
+    }
+
+    .right-sidebar {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;
+    }
+
+    .left-sidebar {
+        display: none;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Left Sidebar -->
+        <nav class="sidebar left-sidebar" id="leftSidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="/placeholder.svg?height=40&width=40" alt="Logo" class="logo-img">
+                    <h1 class="logo-text">EduTrack</h1>
+                </div>
+                <button id="sidebarToggle" class="sidebar-toggle">
+                    <svg viewBox="0 0 24 24" class="toggle-icon">
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                    </svg>
+                </button>
+            </div>
+            <ul class="nav-items">
+                <li class="active"><a href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg><span>Dashboard</span></a></li>
+                <li><a href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span>Results</span></a></li>
+                <li><a href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg><span>Schedule</span></a></li>
+                <li><a href="#"><svg class="icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><span>Resources</span></a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <!-- Header -->
+            <header class="header">
+                <div class="welcome-message">
+                    <h2>Welcome back, Jack!</h2>
+                    <p>Here's an overview of your academic performance.</p>
+                </div>
+                <div class="user-info">
+                    <img src="/placeholder.svg?height=40&width=40" alt="User Avatar" class="user-avatar">
+                    <span class="user-name">Jack Doe</span>
+                </div>
+            </header>
+
+            <main class="main-content">
+                <!-- Dashboard Overview -->
+                <section class="dashboard-overview">
+                    <div class="overview-card">
+                        <h3>Overall GPA</h3>
+                        <p class="highlight">3.8</p>
+                    </div>
+                    <div class="overview-card">
+                        <h3>Completed Courses</h3>
+                        <p class="highlight">12</p>
+                    </div>
+                    <div class="overview-card">
+                        <h3>Ongoing Courses</h3>
+                        <p class="highlight">4</p>
+                    </div>
+                    <div class="overview-card">
+                        <h3>Upcoming Exams</h3>
+                        <p class="highlight">3</p>
+                    </div>
+                </section>
+
+                <!-- Results Overview Chart -->
+                <section class="results-overview">
+                    <h3>Results Overview</h3>
+                    <canvas id="resultsChart"></canvas>
+                </section>
+
+                <!-- Recent Results Table -->
+                <section class="recent-results">
+                    <h3>Recent Results</h3>
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Score</th>
+                                <th>Grade</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Mathematics</td>
+                                <td>85</td>
+                                <td>A</td>
+                                <td><span class="status passed">Passed</span></td>
+                            </tr>
+                            <tr>
+                                <td>Science</td>
+                                <td>78</td>
+                                <td>B+</td>
+                                <td><span class="status passed">Passed</span></td>
+                            </tr>
+                            <tr>
+                                <td>English</td>
+                                <td>92</td>
+                                <td>A+</td>
+                                <td><span class="status passed">Passed</span></td>
+                            </tr>
+                            <tr>
+                                <td>History</td>
+                                <td>68</td>
+                                <td>C+</td>
+                                <td><span class="status pending">Pending</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </main>
+        </div>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar right-sidebar">
+            <div class="calendar-widget">
+                <div class="calendar-header">
+                    <button id="prevMonth">&lt;</button>
+                    <h3 id="currentMonth"></h3>
+                    <button id="nextMonth">&gt;</button>
+                </div>
+                <div id="calendar" class="calendar-grid"></div>
+            </div>
+
+            <div class="upcoming-exams">
+                <h3>Upcoming Exams</h3>
+                <div id="examList" class="exam-grid">
+                    <!-- Exam items will be dynamically added here -->
+                </div>
+            </div>
+        </aside>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    // Sidebar Toggle Functionality
+    const leftSidebar = document.getElementById('leftSidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+
+    sidebarToggle.addEventListener('click', () => {
+        leftSidebar.classList.toggle('collapsed');
+    });
+
+    // Initialize Results Chart
+    const ctx = document.getElementById('resultsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'GPA',
+                data: [3.5, 3.6, 3.8, 3.7, 3.9, 3.8],
+                borderColor: '#6200ea',
+                backgroundColor: 'rgba(98, 0, 234, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'GPA Trend'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 2,
+                    max: 4,
+                    ticks: {
+                        stepSize: 0.5
+                    }
+                }
+            }
+        }
+    });
+
+    // Calendar Functionality
+    const calendar = document.getElementById('calendar');
+    const currentMonthElement = document.getElementById('currentMonth');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+
+    let currentDate = new Date();
+
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        currentMonthElement.textContent = new Date(year, month, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        calendar.innerHTML = '';
+
+        for (let i = 0; i < firstDay; i++) {
+            calendar.appendChild(document.createElement('div'));
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayElement = document.createElement('div');
+            dayElement.classList.add('calendar-day');
+            dayElement.textContent = day;
+            if (day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()) {
+                dayElement.classList.add('active');
+            }
+            calendar.appendChild(dayElement);
+        }
+    }
+
+    renderCalendar();
+
+    prevMonthBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+    });
+
+    nextMonthBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+    });
+
+    // Upcoming Exams
+    const examList = document.getElementById('examList');
+    const upcomingExams = [
+        { date: '2023-06-15', subject: 'Mathematics' },
+        { date: '2023-06-18', subject: 'Science' },
+        { date: '2023-06-22', subject: 'English' }
+    ];
+
+    upcomingExams.forEach(exam => {
+        const examItem = document.createElement('div');
+        examItem.classList.add('exam-item');
+        const examDate = new Date(exam.date);
+        examItem.innerHTML = `
+            <div class="exam-date">${examDate.getDate()}/${examDate.getMonth() + 1}</div>
+            <div class="exam-subject">${exam.subject}</div>
+        `;
+        examList.appendChild(examItem);
+    });
+});
+    </script>
+</body>
+</html>

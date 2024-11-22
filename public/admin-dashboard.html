@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - School Result Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+:root {
+    --primary-color: #4a90e2;
+    --secondary-color: #f5f7fa;
+    --text-color: #333;
+    --text-light: #666;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+}
+
+.sidebar {
+    background: linear-gradient(to bottom, #4a90e2, #357abd);
+    color: white;
+    padding: 2rem;
+    grid-row: 1 / -1;
+    transition: transform 0.3s ease;
+    z-index: 1000;
+}
+
+.sidebar h1 {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.sidebar-nav {
+    list-style: none;
+}
+
+.sidebar-nav li {
+    margin-bottom: 1rem;
+}
+
+.sidebar-nav a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.sidebar-nav a:hover, .sidebar-nav a.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-nav i {
+    margin-right: 0.5rem;
+}
+
+.topbar {
+    background-color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.user-info img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 1rem;
+}
+
+main {
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card h3 {
+    font-size: 1rem;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+}
+
+.stat-card p {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.recent-activity, .manage-users, .system-settings {
+    background-color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.recent-activity h2, .manage-users h2, .system-settings h2 {
+    margin-bottom: 1rem;
+}
+
+.activity-list {
+    list-style: none;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-description {
+    font-weight: 500;
+}
+
+.activity-time {
+    font-size: 0.875rem;
+    color: var(--text-light);
+}
+
+.user-list {
+    list-style: none;
+}
+
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.user-item:last-child {
+    border-bottom: none;
+}
+
+.user-actions button {
+    margin-left: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.btn-warning {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.add-user-btn, .btn-primary {
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+.user-inactive {
+    opacity: 0.5;
+}
+.btn-activate {
+    background-color: var(--success-color);
+    color: white;
+}
+.btn-deactivate {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.profile-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.profile-menu a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.profile-menu a:hover {
+    background-color: #f1f1f1;
+}
+
+.profile-info {
+    background-color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+}
+
+.profile-info p {
+    margin-bottom: 0.5rem;
+}
+
+#editProfileBtn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#editProfileForm {
+    display: none;
+    margin-top: 1rem;
+}
+
+#editProfileForm .form-group {
+    margin-bottom: 1rem;
+}
+
+#editProfileForm label {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+#editProfileForm input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+#saveProfileBtn {
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #357abd;
+}
+
+.show {
+    display: block;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 5px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.search-container {
+    margin-bottom: 20px;
+}
+#searchInput {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+.btn-danger {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+.danger-btn:hover {
+    background-color: #ff3333;
+}
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+.pagination button.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.pagination button:disabled {
+    background-color: #ddd;
+    cursor: not-allowed;
+}
+#loading {
+    text-align: center;
+    padding: 20px;
+}
+
+#errorMessage {
+    color: red;
+    text-align: center;
+    padding: 20px;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin: 0 0 10px 0;
+}
+
+textarea {
+    height: 100px;
+}
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+/* Button Styles */
+.btn {
+    display: inline-block;
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 14px;
+    margin: 2px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: black;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 5px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+
+@media (max-width: 768px) {
+    .reporting-dashboard {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 600px) {
+    table {
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 8px;
+    }
+
+    .btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .container {
+        width: 95%;
+        padding: 0 10px;
+    }
+
+    .modal-content {
+        width: 90%;
+        margin: 10% auto;
+    }
+}
+
+/* Action buttons container */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+.pagination button.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar" id="sidebar">
+            <h1>School Result Platform</h1>
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a href="#" class="active" data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="#" data-section="manage-users"><i class="fas fa-users"></i> Manage Users</a></li>
+                    <li><a href="#" data-section="results"><i class="fas fa-chart-bar"></i> Results</a></li>
+                    <li><a href="#" data-section="reporting"><i class="fas fa-chart-line"></i> Reporting</a></li>
+                    <li><a href="#" data-section="settings"><i class="fas fa-cog"></i> Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <header class="topbar">
+            <button class="menu-toggle" id="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="profile-dropdown">
+                <div class="user-info" id="user-info">
+                    <img src="https://via.placeholder.com/40" alt="User Avatar">
+                    <span id="user-name">Admin User</span>
+                </div>
+                <div class="profile-menu" id="profile-menu">
+                    <a href="#" id="view-profile">View Profile</a>
+                    <a href="#" id="logout">Logout</a>
+                </div>
+            </div>
+        </header>
+        <main id="main-content">
+            <!-- Content will be dynamically loaded here -->        
+
+        </main>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New User</h2>
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label for="fullName">Full Name:</label>
+                    <input type="text" id="fullName" name="fullName" required>
+                </div>
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="userType">User Type:</label>
+                    <select id="userType" name="userType" required>
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="parent">Parent</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="add-user-btn">Add User</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit User</h2>
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId" name="editUserId">
+                <div class="form-group">
+                    <label for="editFullName">Full Name:</label>
+                    <input type="text" id="editFullName" name="editFullName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editUsername">Username:</label>
+                    <input type="text" id="editUsername" name="editUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEmail">Email:</label>
+                    <input type="email" id="editEmail" name="editEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="editUserType">User Type:</label>
+                    <select id="editUserType" name="editUserType" required>
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="parent">Parent</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="add-user-btn">Update User</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Result Modal -->
+    <div id="addResultModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add New Result</h2>
+            <form id="addResultForm">
+                <select id="studentId" name="student_id" required>
+                    <option value="">Select Student</option>
+                </select>
+                <select id="classId" name="class_id" required>
+                    <option value="">Select Class</option>
+                </select>
+                <select id="subjectId" name="subject_id" required>
+                    <option value="">Select Subject</option>
+                </select>
+                <input type="number" id="score" name="score" placeholder="Score" required>
+                <input type="text" id="term" name="term" placeholder="Term" required>
+                <input type="text" id="academicYear" name="academic_year" placeholder="Academic Year" required>
+                <textarea id="teacherComment" name="teacher_comment" placeholder="Teacher's Comment"></textarea>
+                <button type="submit" class="btn btn-primary">Add Result</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Result Modal -->
+    <div id="editResultModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Result</h2>
+            <form id="editResultForm">
+                <input type="hidden" id="editResultId" name="resultId">
+                <select id="editStudentId" name="student_id" required>
+                    <option value="">Select Student</option>
+                </select>
+                <select id="editClassId" name="class_id" required>
+                    <option value="">Select Class</option>
+                </select>
+                <select id="editSubjectId" name="subject_id" required>
+                    <option value="">Select Subject</option>
+                </select>
+                <input type="number" id="editScore" name="score" placeholder="Score" required>
+                <input type="text" id="editTerm" name="term" placeholder="Term" required>
+                <input type="text" id="editAcademicYear" name="academic_year" placeholder="Academic Year" required>
+                <textarea id="editTeacherComment" name="teacher_comment" placeholder="Teacher's Comment"></textarea>
+                <button type="submit" class="btn btn-primary">Update Result</button>
+            </form>
+        </div>
+    </div>
+
+
+<!-- Add Class Modal -->
+<div id="addClassModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Add New Class</h2>
+        <form id="addClassForm">
+            <input type="text" id="className" name="className" placeholder="Class Name" required>
+            <select id="addStreamId" name="streamId" required>
+                <option value="">Select Stream</option>
+            </select>
+            <button type="submit">Add Class</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Class Modal -->
+<div id="editClassModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Edit Class</h2>
+        <form id="editClassForm">
+            <input type="hidden" id="editClassId" name="classId">
+            <input type="text" id="updateClassName" name="className" placeholder="Class Name" required>
+            <select id="updateStreamId" name="streamId" required>
+                <option value="">Select Stream</option>
+            </select>
+            <button type="submit">Update Class</button>
+        </form>
+    </div>
+</div>
+
+        
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+        let searchTerm = '';
+        let currentSection = 'dashboard';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.getElementById('menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const sidebarLinks = document.querySelectorAll('.sidebar-nav a');
+            const userInfo = document.getElementById('user-info');
+            const profileMenu = document.getElementById('profile-menu');
+            const viewProfile = document.getElementById('view-profile');
+            const logout = document.getElementById('logout');
+            const addUserModal = document.getElementById('addUserModal');
+            const editUserModal = document.getElementById('editUserModal');
+            const addUserForm = document.getElementById('addUserForm');
+            const editUserForm = document.getElementById('editUserForm');
+
+            let token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+            }
+
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+
+            userInfo.addEventListener('click', () => {
+                profileMenu.classList.toggle('show');
+            });
+
+            viewProfile.addEventListener('click', (e) => {
+                e.preventDefault();
+                loadProfile();
+                profileMenu.classList.remove('show');
+            });
+
+            logout.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            });
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    sidebarLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    currentSection = link.dataset.section;
+                    loadSection(link.dataset.section);
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('active');
+                    }
+                });
+            });
+
+            
+
+            // Close modals when clicking outside
+            window.onclick = function(event) {
+                if (event.target == addUserModal || event.target == editUserModal) {
+                    addUserModal.style.display = "none";
+                    editUserModal.style.display = "none";
+                }
+            }
+
+            // Close modals when clicking on close button
+            document.querySelectorAll('.close').forEach(closeBtn => {
+                closeBtn.onclick = function() {
+                    addUserModal.style.display = "none";
+                    editUserModal.style.display = "none";
+                }
+            });
+
+            addUserForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(addUserForm);
+                const userData = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/api/admin/users', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            full_name: userData.fullName,
+                            username: userData.username,
+                            email: userData.email,
+                            user_type: userData.userType,
+                            password: userData.password
+                        })
+                    });
+
+                    if (response.ok) {
+                        alert('User added successfully');
+                        addUserModal.style.display = "none";
+                        addUserForm.reset();
+                        loadSection('manage-users');
+                    } else {
+                        const error = await response.json();
+                        alert(`Failed to add user: ${error.message}`);
+                    }
+                } catch (error) {
+                    console.error('Error adding user:', error);
+                    alert('An error occurred while adding the user');
+                }
+            });
+
+            editUserForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(editUserForm);
+                const userData = Object.fromEntries(formData.entries());
+                const userId = userData.editUserId;
+
+                try {
+                    const response = await fetch(`/api/admin/users/${userId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            full_name: userData.editFullName,
+                            username: userData.editUsername,
+                            email: userData.editEmail,
+                            user_type: userData.editUserType
+                        })
+                    });
+
+                    if (response.ok) {
+                        alert('User updated successfully');
+                        editUserModal.style.display = "none";
+                        loadSection('manage-users');
+                    } else {
+                        const error = await response.json();
+                        alert(`Failed to update user: ${error.message}`);
+                    }
+                } catch (error) {
+                    console.error('Error updating user:', error);
+                    alert('An error occurred while updating the user');
+                }
+            });
+
+
+            // Load dashboard by default
+            loadSection('dashboard');
+        });
+
+     async function loadSection(section) {
+        const mainContent = document.getElementById('main-content');
+        mainContent.innerHTML = '<p>Loading...</p>';
+
+        try {
+            switch (section) {
+            case 'dashboard':
+                await loadDashboard();
+                break;
+            case 'manage-users':
+                await loadManageUsers();
+                break;
+            case 'results':
+                loadResultsManagement();
+                break;
+            case 'reporting':
+                await loadReporting();
+                break;
+            case 'settings':
+                await loadSettings();
+                break;
+            default:
+                mainContent.innerHTML = '<p>Section not found</p>';
+            }
+        } catch (error) {
+            console.error(`Error loading section ${section}:`, error);
+            mainContent.innerHTML = `<p>Error loading ${section}. Please try again later.</p>`;
+        }
+    }
+    
+        async function loadDashboard() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <h2>Dashboard Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <p id="totalUsers">Loading...</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Students</h3>
+                        <p id="totalStudents">Loading...</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Teachers</h3>
+                        <p id="totalTeachers">Loading...</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Parents</h3>
+                        <p id="totalParents">Loading...</p>
+                    </div>
+                </div>
+                <div class="recent-activity">
+                    <h2>Recent Activity</h2>
+                    <ul class="activity-list" id="activityList">
+                        <li>Loading recent activities...</li>
+                    </ul>
+                </div>
+            `;
+
+            await Promise.all([fetchStatistics(), fetchRecentActivity()]);
+        }
+
+        async function fetchStatistics() {
+            try {
+                const response = await fetch('/api/admin/statistics', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('totalUsers').textContent = data.totalUsers;
+                    document.getElementById('totalStudents').textContent = data.totalStudents;
+                    document.getElementById('totalTeachers').textContent = data.totalTeachers;
+                    document.getElementById('totalParents').textContent = data.totalParents;
+                } else {
+                    throw new Error('Failed to fetch statistics');
+                }
+            } catch (error) {
+                console.error('Error fetching statistics:', error);
+                document.getElementById('totalUsers').textContent = 'Error';
+                document.getElementById('totalStudents').textContent = 'Error';
+                document.getElementById('totalTeachers').textContent = 'Error';
+                document.getElementById('totalParents').textContent = 'Error';
+            }
+        }
+
+        async function fetchRecentActivity() {
+            try {
+                const response = await fetch('/api/admin/recent-activity', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                    const activities = await response.json();
+                    const activityList = document.getElementById('activityList');
+                    if (activities.length === 0) {
+                        activityList.innerHTML = '<li>No recent activities</li>';
+                    } else {
+                        activityList.innerHTML = activities.map(activity => `
+                            <li class="activity-item">
+                                <span class="activity-description">${activity.action}</span>
+                                <span class="activity-time">${new Date(activity.timestamp).toLocaleString()}</span>
+                            </li>
+                        `).join('');
+                    }
+                } else {
+                    throw new Error('Failed to fetch recent activity');
+                }
+            } catch (error) {
+                console.error('Error fetching recent activity:', error);
+                document.getElementById('activityList').innerHTML = '<li>Error loading recent activities</li>';
+            }
+        }
+
+        // ==============================USER MANAGEMENT=====================================================
+
+        async function loadManageUsers() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="manage-users">
+                    <h2>Manage Users</h2>
+                    <button id="addUserBtn" class="btn btn-primary">Add New User</button>
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search users...">
+                    </div>
+                    <div id="loading">Loading...</div>
+                    <div id="errorMessage"></div>
+                    <table id="usersTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            `;
+
+            const addUserBtn = document.getElementById('addUserBtn');
+            addUserBtn.addEventListener('click', () => {
+                document.getElementById('addUserModal').style.display = 'block';
+            });
+
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', handleSearch);
+
+            await fetchUsers();
+        }
+
+        async function fetchUsers(page = 1, search = '') {
+            const loadingElement = document.getElementById('loading');
+            const tableElement = document.getElementById('usersTable');
+            const errorElement = document.getElementById('errorMessage');
+
+            loadingElement.style.display = 'block';
+            tableElement.style.display = 'none';
+            errorElement.textContent = '';
+
+            try {
+                const response = await fetch(`/api/admin/users?page=${page}&search=${search}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch users');
+                }
+                const data = await response.json();
+                if (Array.isArray(data.users)) {
+                    renderUsers(data.users);
+                    renderPagination(data.currentPage, data.totalPages);
+                    currentPage = data.currentPage;
+                    totalPages = data.totalPages;
+                } else {
+                    throw new Error('Invalid data format received from server');
+                }
+            } catch (error) {
+                console.error('Error fetching users:', error);
+                errorElement.textContent = 'Error loading users. Please try again.';
+            } finally {
+                loadingElement.style.display = 'none';
+                tableElement.style.display = 'table';
+            }
+        }
+
+        function renderUsers(users) {
+            const tableBody = document.getElementById('usersTableBody');
+            if (users.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4">No users found</td></tr>';
+            } else {
+                tableBody.innerHTML = users.map(user => `
+                    <tr class="${user.is_active ? '' : 'user-inactive'}">
+                        <td>${user.full_name}</td>
+                        <td>${user.email}</td>
+                        <td>${user.user_type}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="editUser(${user.user_id})">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteUser(${user.user_id})">Delete</button>
+                            ${user.is_active 
+                                ? `<button class="btn btn-deactivate" onclick="deactivateUser(${user.user_id})">Deactivate</button>`
+                                : `<button class="btn btn-activate" onclick="activateUser(${user.user_id})">Activate</button>`
+                            }
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function deactivateUser(userId) {
+            if (confirm('Are you sure you want to deactivate this user?')) {
+                try {
+                    const response = await fetch(`/api/admin/users/${userId}/deactivate`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to deactivate user');
+                    }
+                    alert('User deactivated successfully');
+                    await fetchUsers(currentPage, searchTerm);
+                } catch (error) {
+                    console.error('Error deactivating user:', error);
+                    alert('Failed to deactivate user. Please try again.');
+                }
+            }
+        }
+
+        async function activateUser(userId) {
+            if (confirm('Are you sure you want to activate this user?')) {
+                try {
+                    const response = await fetch(`/api/admin/users/${userId}/activate`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to activate user');
+                    }
+                    alert('User activated successfully');
+                    await fetchUsers(currentPage, searchTerm);
+                } catch (error) {
+                    console.error('Error activating user:', error);
+                    alert('Failed to activate user. Please try again.');
+                }
+            }
+        }
+
+
+        function renderPagination(currentPage, totalPages) {
+            const paginationElement = document.getElementById('pagination');
+            paginationElement.innerHTML = `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                <span>Page ${currentPage} of ${totalPages}</span>
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
+            `;
+        }
+
+        function changePage(page) {
+            fetchUsers(page, document.getElementById('searchInput').value);
+        }
+
+        function handleSearch(e) {
+            searchTerm = e.target.value;
+            fetchUsers(1, searchTerm);
+        }
+        
+        async function editUser(userId) {
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                        const user = await response.json();
+                        document.getElementById('editUserId').value = user.user_id;
+                        document.getElementById('editFullName').value = user.full_name;
+                        document.getElementById('editUsername').value = user.username;
+                        document.getElementById('editEmail').value = user.email;
+                        document.getElementById('editUserType').value = user.user_type;
+                        document.getElementById('editUserModal').style.display = 'block';
+                    } else if (response.status === 404) {
+                        alert('User not found. They may have been deleted.');
+                    } else {
+                        throw new Error('Failed to fetch user details');
+                    }
+                } catch (error) {
+                    console.error('Error fetching user details:', error);
+                    alert('Failed to load user details. Please try again.');
+                }
+            }
+
+
+        async function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user?')) {
+                try {
+                    const response = await fetch(`/api/admin/users/${userId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    if (response.ok) {
+                        alert('User deleted successfully');
+                        await fetchUsers(); // Refresh the user list
+                    } else {
+                        throw new Error('Failed to delete user');
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    alert('An error occurred while deleting the user');
+                }
+            }
+        }
+
+        // ===============================RESULT MANAGEMENT =============================================================
+
+        // Load Results Management
+async function loadResultsManagement() {
+    const mainContent = document.getElementById('main-content');
+    mainContent.innerHTML = `
+        <div id="resultsManagement" class="section">
+            <h2>Results Management</h2>
+            <button id="addResultBtn" class="btn btn-primary">Add New Result</button>
+            <div class="search-container">
+                <input type="text" id="resultSearchInput" placeholder="Search results...">
+            </div>
+            <div id="resultLoading">Loading...</div>
+            <div id="resultErrorMessage"></div>
+            <div class="table-responsive">
+                <table id="resultsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Class</th>
+                            <th>Subject</th>
+                            <th>Score</th>
+                            <th>Grade</th>
+                            <th>Term</th>
+                            <th>Academic Year</th>
+                            <th>Teacher's Comment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody"></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="resultPagination"></div>
+        </div>
+    `;
+
+    setupEventListeners();
+    await fetchResults();
+}
+
+// Setup Event Listeners
+function setupEventListeners() {
+    const addResultBtn = document.getElementById('addResultBtn');
+    const resultSearchInput = document.getElementById('resultSearchInput');
+    const addResultForm = document.getElementById('addResultForm');
+    const editResultForm = document.getElementById('editResultForm');
+
+    if (addResultBtn) {
+        addResultBtn.addEventListener('click', () => {
+            openModal('addResultModal');
+            populateStudentsClassesAndSubjects();
+        });
+    }
+
+    if (resultSearchInput) {
+        resultSearchInput.addEventListener('input', handleResultSearch);
+    }
+
+    if (addResultForm) {
+        addResultForm.addEventListener('submit', handleAddResult);
+    }
+
+    if (editResultForm) {
+        editResultForm.addEventListener('submit', handleEditResultSubmit);
+    }
+
+    // Setup modal close handlers
+    const closeButtons = document.querySelectorAll('.close');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const modal = button.closest('.modal');
+            if (modal) {
+                closeModal(modal.id);
+            }
+        });
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target.classList.contains('modal')) {
+            closeModal(event.target.id);
+        }
+    });
+}
+
+// Fetch Results
+async function fetchResults(page = 1, search = '') {
+    const loadingElement = document.getElementById('resultLoading');
+    const tableElement = document.getElementById('resultsTable');
+    const errorElement = document.getElementById('resultErrorMessage');
+
+    loadingElement.style.display = 'block';
+    tableElement.style.display = 'none';
+    errorElement.textContent = '';
+
+    try {
+        const response = await fetch(`/api/results?page=${page}&search=${search}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        if (!response.ok) {
+            throw new Error('Failed to fetch results');
+        }
+        const data = await response.json();
+        renderResults(data.results);
+        renderResultPagination(data.currentPage, data.totalPages);
+        currentPage = data.currentPage;
+        totalPages = data.totalPages;
+    } catch (error) {
+        console.error('Error fetching results:', error);
+        errorElement.textContent = 'Error loading results. Please try again.';
+    } finally {
+        loadingElement.style.display = 'none';
+        tableElement.style.display = 'table';
+    }
+}
+
+// Render Results
+function renderResults(results) {
+    const tableBody = document.getElementById('resultsTableBody');
+    if (!results || results.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="9">No results found</td></tr>';
+    } else {
+        tableBody.innerHTML = results.map(result => `
+            <tr>
+                <td>${result.student_name || 'N/A'}</td>
+                <td>${result.class_name || 'N/A'}</td>
+                <td>${result.subject_name || 'N/A'}</td>
+                <td>${result.score || 'N/A'}</td>
+                <td>${result.grade || 'N/A'}</td>
+                <td>${result.term || 'N/A'}</td>
+                <td>${result.academic_year || 'N/A'}</td>
+                <td>${result.teacher_comment || 'N/A'}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn btn-warning" onclick="editResult(${result.result_id})">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteResult(${result.result_id})">Delete</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+}
+
+// Handle Add Result
+async function handleAddResult(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const resultData = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/api/results', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(resultData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        alert('Result added successfully');
+        closeModal('addResultModal');
+        e.target.reset();
+        await fetchResults();
+    } catch (error) {
+        console.error('Error adding result:', error);
+        alert(`Failed to add result: ${error.message}`);
+    }
+}
+
+// Handle Edit Result Submit
+async function handleEditResultSubmit(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const resultData = Object.fromEntries(formData.entries());
+    const resultId = resultData.resultId;
+
+    try {
+        const response = await fetch(`/api/results/${resultId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(resultData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        alert('Result updated successfully');
+        closeModal('editResultModal');
+        await fetchResults(currentPage, searchTerm);
+    } catch (error) {
+        console.error('Error updating result:', error);
+        alert(`Failed to update result: ${error.message}`);
+    }
+}
+
+// Populate Students, Classes, and Subjects
+async function populateStudentsClassesAndSubjects() {
+    try {
+        const [studentsResponse, classesResponse, subjectsResponse] = await Promise.all([
+            fetch('/api/students', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            }),
+            fetch('/api/classes', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            }),
+            fetch('/api/subjects', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+        ]);
+
+        const students = await studentsResponse.json();
+        const classes = await classesResponse.json();
+        const subjects = await subjectsResponse.json();
+
+        const studentSelect = document.getElementById('studentId');
+        const classSelect = document.getElementById('classId');
+        const subjectSelect = document.getElementById('subjectId');
+
+        studentSelect.innerHTML = '<option value="">Select Student</option>' + 
+            students.map(student => `<option value="${student.user_id}">${student.full_name}</option>`).join('');
+
+        classSelect.innerHTML = '<option value="">Select Class</option>' + 
+            classes.map(cls => `<option value="${cls.class_id}">${cls.class_name}</option>`).join('');
+
+        subjectSelect.innerHTML = '<option value="">Select Subject</option>' + 
+            subjects.map(subject => `<option value="${subject.subject_id}">${subject.subject_name}</option>`).join('');
+
+    } catch (error) {
+        console.error('Error populating form data:', error);
+        alert('Failed to load form data. Please try again.');
+    }
+}
+
+// Modal Management
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+    } else {
+        console.error(`Modal with id ${modalId} not found`);
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    } else {
+        console.error(`Modal with id ${modalId} not found`);
+    }
+}
+
+// Handle Result Search
+function handleResultSearch(e) {
+    searchTerm = e.target.value;
+    currentPage = 1;
+    fetchResults(currentPage, searchTerm);
+}
+
+// Render Result Pagination
+function renderResultPagination(currentPage, totalPages) {
+    const paginationElement = document.getElementById('resultPagination');
+    let paginationHTML = '';
+
+    if (totalPages > 1) {
+        paginationHTML += `<button onclick="changePage(1)" ${currentPage === 1 ? 'disabled' : ''}>First</button>`;
+        paginationHTML += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>`;
+
+        for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+            paginationHTML += `<button onclick="changePage(${i})" ${i === currentPage ? 'class="active"' : ''}>${i}</button>`;
+        }
+
+        paginationHTML += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`;
+        paginationHTML += `<button onclick="changePage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''}>Last</button>`;
+    }
+
+    paginationElement.innerHTML = paginationHTML;
+}
+
+// Change Page
+function changePage(page) {
+    currentPage = page;
+    fetchResults(currentPage, searchTerm);
+}
+
+
+// Change Page
+function changePage(page) {
+    currentPage = page;
+    fetchResults(currentPage, searchTerm);
+}
+
+// Edit Result
+async function editResult(resultId) {
+    try {
+        const response = await fetch(`/api/results/${resultId}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch result details');
+        }
+
+        const result = await response.json();
+        openModal('editResultModal');
+        await populateStudentsClassesAndSubjects('edit'); // Pass 'edit' to indicate it's for the edit form
+        populateEditForm(result);
+    } catch (error) {
+        console.error('Error fetching result details:', error);
+        alert('Failed to load result details. Please try again.');
+    }
+}
+
+// Populate Edit Form
+function populateEditForm(result) {
+    const form = document.getElementById('editResultForm');
+    form.elements['resultId'].value = result.result_id;
+    form.elements['student_id'].value = result.student_id;
+    form.elements['class_id'].value = result.class_id;
+    form.elements['subject_id'].value = result.subject_id;
+    form.elements['score'].value = result.score;
+    form.elements['term'].value = result.term;
+    form.elements['academic_year'].value = result.academic_year;
+    form.elements['teacher_comment'].value = result.teacher_comment || '';
+}
+
+// Delete Result
+async function deleteResult(resultId) {
+    if (confirm('Are you sure you want to delete this result?')) {
+        try {
+            const response = await fetch(`/api/results/${resultId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete result');
+            }
+
+            alert('Result deleted successfully');
+            await fetchResults(currentPage, searchTerm);
+        } catch (error) {
+            console.error('Error deleting result:', error);
+            alert('Failed to delete result. Please try again.');
+        }
+    }
+}
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', () => {
+    const addResultForm = document.getElementById('addResultForm');
+    const editResultForm = document.getElementById('editResultForm');
+
+    if (addResultForm) {
+        addResultForm.addEventListener('submit', handleAddResult);
+    }
+
+    if (editResultForm) {
+        editResultForm.addEventListener('submit', handleEditResultSubmit);
+    }
+
+    // Load results management if on the results page
+    if (window.location.hash === '#results') {
+        loadResultsManagement();
+    }
+});
+
+ 
+        // ==============================REPORT AND ANALYTICS =============================================
+       
+        // ===============================SYSTEM SETTING===================================================
+                function loadSettings() {
+                    const mainContent = document.getElementById('main-content');
+                    mainContent.innerHTML = `
+                        <div class="system-settings">
+                            <h2>System Settings</h2>
+                            <p>System settings functionality to be implemented.</p>
+                        </div>
+                    `;
+                }
+
+
+                // =====================================PROFILE SETTINGS =================================
+
+                async function loadProfile() {
+                    const mainContent = document.getElementById('main-content');
+                    mainContent.innerHTML = `
+                        <div class="profile">
+                            <h2>Admin Profile</h2>
+                            <div class="profile-info">
+                                <p><strong>Name:</strong> <span id="profileName"></span></p>
+                                <p><strong>Username:</strong> <span id="profileUsername"></span></p>
+                                <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+                                <p><strong>Role:</strong> <span id="profileRole"></span></p>
+                            </div>
+                            <div class="profile-actions">
+                                <button id="editProfileBtn" class="btn btn-primary">Edit Profile</button>
+                            </div>
+                            <form id="editProfileForm">
+                                <div class="form-group">
+                                    <label for="editProfileName">Name:</label>
+                                    <input type="text" id="editProfileName" name="editProfileName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editProfileUsername">Username:</label>
+                                    <input type="text" id="editProfileUsername" name="editProfileUsername" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editProfileEmail">Email:</label>
+                                    <input type="email" id="editProfileEmail" name="editProfileEmail" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </form>
+                        </div>
+                    `;
+
+                    await fetchProfileInfo();
+
+                    const editProfileBtn = document.getElementById('editProfileBtn');
+                    const editProfileForm = document.getElementById('editProfileForm');
+
+                    editProfileBtn.addEventListener('click', () => {
+                        editProfileForm.style.display = 'block';
+                        editProfileBtn.style.display = 'none';
+                    });
+
+                    editProfileForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        await updateProfile();
+                    });
+                }
+
+                async function fetchProfileInfo() {
+                    try {
+                        const response = await fetch('/api/admin/profile', {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        });
+                        if (response.ok) {
+                            const profile = await response.json();
+                            document.getElementById('profileName').textContent = profile.full_name;
+                            document.getElementById('profileUsername').textContent = profile.username;
+                            document.getElementById('profileEmail').textContent = profile.email;
+                            document.getElementById('profileRole').textContent = profile.user_type;
+                            document.getElementById('user-name').textContent = profile.full_name;
+
+                            // Populate edit form fields
+                            document.getElementById('editProfileName').value = profile.full_name;
+                            document.getElementById('editProfileUsername').value = profile.username;
+                            document.getElementById('editProfileEmail').value = profile.email;
+                        } else {
+                            throw new Error('Failed to fetch profile information');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching profile information:', error);
+                        document.getElementById('profileName').textContent = 'Error loading profile';
+                        document.getElementById('profileUsername').textContent = 'Error loading profile';
+                        document.getElementById('profileEmail').textContent = 'Error loading profile';
+                        document.getElementById('profileRole').textContent = 'Error loading profile';
+                    }
+                }
+
+                async function updateProfile() {
+                    const name = document.getElementById('editProfileName').value;
+                    const username = document.getElementById('editProfileUsername').value;
+                    const email = document.getElementById('editProfileEmail').value;
+
+                    try {
+                        const response = await fetch('/api/admin/profile', {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({ full_name: name, username, email })
+                        });
+
+                        if (response.ok) {
+                            alert('Profile updated successfully');
+                            await fetchProfileInfo();
+                            document.getElementById('editProfileForm').style.display = 'none';
+                            document.getElementById('editProfileBtn').style.display = 'block';
+                        } else {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Failed to update profile');
+                        }
+                    } catch (error) {
+                        console.error('Error updating profile:', error);
+                        alert('Failed to update profile: ' + error.message);
+                    }
+                }
+    </script>
+</body>
+</html>

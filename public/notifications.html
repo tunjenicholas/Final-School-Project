@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - School Result Platform</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .notifications {
+            margin-top: 20px;
+        }
+        .notification {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .notification:last-child {
+            border-bottom: none;
+        }
+        .notification.unread {
+            background-color: #e7f3fe;
+        }
+        .notification-message {
+            flex-grow: 1;
+        }
+        .notification-date {
+            color: #666;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        .mark-read {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .mark-read:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Notifications</h1>
+        <div id="notificationsContainer" class="notifications"></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            await displayNotifications();
+        });
+
+        async function displayNotifications() {
+            const token = localStorage.getItem('token');
+            const notificationsResponse = await fetch('/api/notifications', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const notifications = await notificationsResponse.json();
+
+            const notificationsContainer = document.getElementById('notificationsContainer');
+            notificationsContainer.innerHTML = notifications.map(notification => `
+                <div class="notification ${notification.is_read ? '' : 'unread'}" id="notification-${notification.notification_id}">
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-date">${new Date(notification.created_at).toLocaleString()}</div>
+                    ${notification.is_read ? '' : `
+                        <button class="mark-read" onclick="markAsRead(${notification.notification_id})">Mark as Read</button>
+                    `}
+                </div>
+            `).join('');
+        }
+
+        async function markAsRead(notificationId) {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/notifications/${notificationId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const notificationElement = document.getElementById(`notification-${notificationId}`);
+                notificationElement.classList.remove('unread');
+                notificationElement.querySelector('.mark-read').remove();
+            } else {
+                alert('Failed to mark notification as read');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent Dashboard - School Result Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Parent Dashboard</h1>
+        
+        <div class="card">
+            <h2>Child Overview</h2>
+            <select id="childSelect">
+                <option value="">Select a child</option>
+                <!-- Child options will be inserted here -->
+            </select>
+        </div>
+
+        <div id="childData" style="display: none;">
+            <div class="tab">
+                <button class="tablinks" onclick="openTab(event, 'Results')" id="defaultOpen">Results</button>
+                <button class="tablinks" onclick="openTab(event, 'Performance')">Performance</button>
+            </div>
+
+            <div id="Results" class="tabcontent">
+                <h3>Results</h3>
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Score</th>
+                            <th>Grade</th>
+                            <th>Term</th>
+                            <th>Academic Year</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Result rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="Performance" class="tabcontent">
+                <h3>Performance Overview</h3>
+                <table id="performanceTable">
+                    <thead>
+                        <tr>
+                            <th>Academic Year</th>
+                            <th>Term</th>
+                            <th>Average Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Performance rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and populate child select
+        fetch('/api/parent/children')
+            .then(response => response.json())
+            .then(data => {
+                const childSelect = document.getElementById('childSelect');
+                data.forEach(child => {
+                    const option = document.createElement('option');
+                    option.value = child.user_id;
+                    option.textContent = child.full_name;
+                    childSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching children:', error));
+
+        // Fetch and display child data when selected
+        document.getElementById('childSelect').addEventListener('change', function(e) {
+            const childId = e.target.value;
+            if (childId) {
+                Promise.all([
+                    fetch(`/api/parent/results?childId=${childId}`).then(response => response.json()),
+                    fetch(`/api/parent/performance?childId=${childId}`).then(response => response.json())
+                ]).then(([resultsData, performanceData]) => {
+                    displayResults(resultsData.results);
+                    displayPerformance(performanceData);
+                    document.getElementById('childData').style.display = 'block';
+                    document.getElementById('defaultOpen').click();
+                }).catch(error => console.error('Error fetching child data:', error));
+            } else {
+                document.getElementById('childData').style.display = 'none';
+            }
+        });
+
+        function displayResults(results) {
+            const resultsTable = document.getElementById('resultsTable').getElementsByTagName('tbody')[0];
+            resultsTable.innerHTML = ''; // Clear existing rows
+            results.forEach(result => {
+                const row = resultsTable.insertRow();
+                row.insertCell(0).textContent = result.subject_name;
+                row.insertCell(1).textContent = result.score;
+                row.insertCell(2).textContent = result.grade;
+                row.insertCell(3).textContent = result.term;
+                row.insertCell(4).textContent = result.academic_year;
+            });
+        }
+
+        function displayPerformance(performance) {
+            const performanceTable = document.getElementById('performanceTable').getElementsByTagName('tbody')[0];
+            performanceTable.innerHTML = ''; // Clear existing rows
+            performance.forEach(perf => {
+                const row = performanceTable.insertRow();
+                row.insertCell(0).textContent = perf.academic_year;
+                row.insertCell(1).textContent = perf.term;
+                row.insertCell(2).textContent = perf.average_score.toFixed(2);
+            });
+        }
+
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+    </script>
+</body>
+</html>

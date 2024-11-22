@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Result Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+            padding: 0 20px;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding-top: 30px;
+            min-height: 70px;
+            border-bottom: #0779e4 3px solid;
+        }
+        header a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        header .branding {
+            float: left;
+        }
+        header .branding h1 {
+            margin: 0;
+        }
+        header nav {
+            float: right;
+            margin-top: 10px;
+        }
+        header nav ul {
+            padding: 0;
+        }
+        header nav li {
+            display: inline;
+            padding: 0 20px;
+        }
+        .notification-icon {
+            position: relative;
+            display: inline-block;
+            margin-left: 20px;
+        }
+        .notification-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 3px 6px;
+            font-size: 12px;
+        }
+        #content {
+            padding: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="branding">
+                <h1>School Result Platform</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="/" id="homeLink">Home</a></li>
+                    <li><a href="/dashboard.html" id="dashboardLink">Dashboard</a></li>
+                    <li><a href="/notifications.html" id="notificationsLink">Notifications</a></li>
+                    <li><a href="/login.html" id="loginLink">Login</a></li>
+                    <li><a href="#" id="logoutLink" style="display: none;">Logout</a></li>
+                    <li class="notification-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-count" id="notificationCount">0</span>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container" id="content">
+        <!-- Content will be dynamically loaded here -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const loginLink = document.getElementById('loginLink');
+            const logoutLink = document.getElementById('logoutLink');
+            const dashboardLink = document.getElementById('dashboardLink');
+
+            if (token) {
+                loginLink.style.display = 'none';
+                logoutLink.style.display = 'inline';
+                dashboardLink.style.display = 'inline';
+                fetchUnreadNotificationsCount();
+            } else {
+                loginLink.style.display = 'inline';
+                logoutLink.style.display = 'none';
+                dashboardLink.style.display = 'none';
+            }
+
+            logoutLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            });
+        });
+
+        async function fetchUnreadNotificationsCount() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch('/api/notifications/unread-count', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                document.getElementById('notificationCount').textContent = data.count;
+            } catch (error) {
+                console.error('Error fetching unread notifications count:', error);
+            }
+        }
+    </script>
+</body>
+</html>

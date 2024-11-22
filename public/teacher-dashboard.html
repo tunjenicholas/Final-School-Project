@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - School Result Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teacher Dashboard</h1>
+
+        <div id="loading" class="loading">Loading...</div>
+        <div id="error" class="error"></div>
+        
+        <div class="card">
+            <h2>Class Overview</h2>
+            <select id="classSelect">
+                <option value="">Select a class</option>
+                <!-- Class options will be inserted here -->
+            </select>
+        </div>
+
+        <div id="studentListCard" class="card" style="display: none;">
+            <h2>Student List</h2>
+            <input type="text" id="searchStudent" placeholder="Search students...">
+            <button id="addResult">Add Result</button>
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Student ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Student rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+         let token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+        }
+
+        function clearError() {
+            document.getElementById('error').textContent = '';
+        }
+
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Failed to fetch data. Please try again later.');
+                throw error;
+            }
+        }
+
+        // Fetch and populate class select
+        async function fetchClasses() {
+            showLoading();
+            clearError();
+            try {
+                const data = await fetchData('/api/teacher/classes');
+                const classSelect = document.getElementById('classSelect');
+                classSelect.innerHTML = '<option value="">Select a class</option>'; // Clear existing options
+                data.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls.class_id;
+                    option.textContent = cls.class_name;
+                    classSelect.appendChild(option);
+                });
+            } catch (error) {
+                // Error is already handled in fetchData
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Fetch and display students when a class is selected
+        async function fetchStudents(classId) {
+            showLoading();
+            clearError();
+            try {
+                const data = await fetchData(`/api/teacher/students?classId=${classId}`);
+                const studentTable = document.getElementById('studentTable').getElementsByTagName('tbody')[0];
+                studentTable.innerHTML = ''; // Clear existing rows
+                data.forEach(student => {
+                    const row = studentTable.insertRow();
+                    row.insertCell(0).textContent = student.full_name;
+                    row.insertCell(1).textContent = student.student_id;
+                    const actionsCell = row.insertCell(2);
+                    const viewResultsButton = document.createElement('button');
+                    viewResultsButton.textContent = 'View Results';
+                    viewResultsButton.onclick = () => viewResults(student.user_id);
+                    const addResultButton = document.createElement('button');
+                    addResultButton.textContent = 'Add Result';
+                    addResultButton.onclick = () => addResult(student.user_id);
+                    actionsCell.appendChild(viewResultsButton);
+                    actionsCell.appendChild(addResultButton);
+                });
+                document.getElementById('studentListCard').style.display = 'block';
+            } catch (error) {
+                // Error is already handled in fetchData
+            } finally {
+                hideLoading();
+            }
+        }
+
+        fetchClasses();
+
+        document.getElementById('classSelect').addEventListener('change', function(e) {
+            const classId = e.target.value;
+            if (classId) {
+                fetchStudents(classId);
+            } else {
+                document.getElementById('studentListCard').style.display = 'none';
+            }
+        });
+
+        // Search students
+        document.getElementById('searchStudent').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.getElementById('studentTable').getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            for (let i = 0; i < rows.length; i++) {
+                const name = rows[i].cells[0].textContent.toLowerCase();
+                const studentId = rows[i].cells[1].textContent.toLowerCase();
+                if (name.includes(searchTerm) || studentId.includes(searchTerm)) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        });
+
+        // Add result button click handler
+        document.getElementById('addResult').addEventListener('click', function() {
+            // Implement add result functionality for the whole class
+            console.log('Add result for class clicked');
+        });
+
+        function viewResults(studentId) {
+            // Implement view results functionality
+            console.log('View results for student:', studentId);
+        }
+
+        function addResult(studentId) {
+            // Implement add result functionality for a single student
+            console.log('Add result for student:', studentId);
+        }
+    </script>
+</body>
+</html>

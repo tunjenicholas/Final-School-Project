@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Results - School Result Platform</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            display: grid;
+            gap: 10px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Input Student Results</h1>
+        <form id="resultForm">
+            <label for="studentClass">Student Class:</label>
+            <select id="studentClass" required></select>
+
+            <label for="subject">Subject:</label>
+            <select id="subject" required></select>
+
+            <label for="score">Score:</label>
+            <input type="number" id="score" min="0" max="100" step="0.01" required>
+
+            <label for="grade">Grade:</label>
+            <input type="text" id="grade" maxlength="2" required>
+
+            <label for="term">Term:</label>
+            <select id="term" required>
+                <option value="First">First</option>
+                <option value="Second">Second</option>
+                <option value="Third">Third</option>
+            </select>
+
+            <button type="submit">Submit Result</button>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const [classesResponse, subjectsResponse] = await Promise.all([
+                    fetch('/api/classes', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('/api/subjects', { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+
+                const classes = await classesResponse.json();
+                const subjects = await subjectsResponse.json();
+
+                const studentClassSelect = document.getElementById('studentClass');
+                const subjectSelect = document.getElementById('subject');
+
+                classes.forEach(c => {
+                    const option = document.createElement('option');
+                    option.value = c.class_id;
+                    option.textContent = c.class_name;
+                    studentClassSelect.appendChild(option);
+                });
+
+                subjects.forEach(s => {
+                    const option = document.createElement('option');
+                    option.value = s.subject_id;
+                    option.textContent = s.subject_name;
+                    subjectSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+
+            document.getElementById('resultForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = {
+                    studentClassId: document.getElementById('studentClass').value,
+                    subjectId: document.getElementById('subject').value,
+                    score: document.getElementById('score').value,
+                    grade: document.getElementById('grade').value,
+                    term: document.getElementById('term').value
+                };
+
+                try {
+                    const response = await fetch('/api/results', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert(data.message);
+                        document.getElementById('resultForm').reset();
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                } catch (error) {
+                    console.error('Error submitting result:', error);
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
