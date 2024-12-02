@@ -1,18 +1,20 @@
-const db = require('../config/database');
 const bcrypt = require('bcrypt');
-const { sendVerificationEmail } = require('../utils/email');
 const jwt = require('jsonwebtoken');
+const pool = require('../config/database');
+const db = require('../config/database');
+const { validatePassword } = require('../utils/passwordValidator');
+const { sendVerificationEmail } = require('../utils/email');
 
-function generateStudentNumber() {
-    return 'S' + Math.random().toString(36).substr(2, 8).toUpperCase();
-}
+// function generateStudentNumber() {
+//     return 'S' + Math.random().toString(36).substr(2, 8).toUpperCase();
+// }
 
-function getCurrentAcademicYear() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    return month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
-}
+// function getCurrentAcademicYear() {
+//     const now = new Date();
+//     const year = now.getFullYear();
+//     const month = now.getMonth() + 1;
+//     return month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+// }
 
 exports.getStatistics = async (req, res) => {
     try {
@@ -68,10 +70,16 @@ exports.addUser = async (req, res) => {
         return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const connection = await db.getConnection();
+    const connection = await pool.getConnection();
     await connection.beginTransaction();
 
     try {
+        // Validate password
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
+            return res.status(400).json({ message: passwordValidation.message });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '24h' });
         
@@ -126,6 +134,18 @@ exports.addUser = async (req, res) => {
     }
 };
 
+// Helper functions
+function generateStudentNumber() {
+    return 'S' + Math.random().toString(36).substr(2, 8).toUpperCase();
+}
+
+function getCurrentAcademicYear() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    return month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+}
+
 exports.editUser = async (req, res) => {
     const { full_name, username, email, user_type } = req.body;
     const userId = req.params.userId;
@@ -177,32 +197,30 @@ exports.deleteUser = async (req, res) => {
 
 exports.getUsers = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
-    const limit = 10;
+    const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
-    const search = req.query.search || '';
+    const searchTerm = req.query.search || '';
 
     try {
         const [users] = await db.query(
-            `SELECT user_id, full_name, email, user_type, is_active 
+            `SELECT user_id, full_name, email, user_type, is_active, is_verified 
              FROM Users 
-             WHERE (full_name LIKE ? OR email LIKE ?) 
+             WHERE full_name LIKE ? OR email LIKE ? 
+             ORDER BY full_name 
              LIMIT ? OFFSET ?`,
-            [`%${search}%`, `%${search}%`, limit, offset]
+            [`%${searchTerm}%`, `%${searchTerm}%`, limit, offset]
         );
 
         const [totalUsers] = await db.query(
-            `SELECT COUNT(*) as count 
-             FROM Users 
-             WHERE (full_name LIKE ? OR email LIKE ?)`,
-            [`%${search}%`, `%${search}%`]
+            'SELECT COUNT(*) as count FROM Users WHERE full_name LIKE ? OR email LIKE ?',
+            [`%${searchTerm}%`, `%${searchTerm}%`]
         );
-
-        const totalPages = Math.ceil(totalUsers[0].count / limit);
 
         res.json({
             users,
             currentPage: page,
-            totalPages,
+            totalPages: Math.ceil(totalUsers[0].count / limit),
+            totalUsers: totalUsers[0].count
         });
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -312,3 +330,93 @@ exports.updateProfile = async (req, res) => {
         res.status(500).json({ message: 'Error updating profile', error: error.message });
     }
 };
+
+exports.getUnverifiedUsers = async (req, res) => {
+    try {
+        const [users] = await db.query(
+            'SELECT user_id, full_name, email, user_type, created_at FROM Users WHERE is_verified = FALSE'
+        );
+        res.json(users);
+    } catch (error) {
+        console.error('Error fetching unverified users:', error);
+        res.status(500).json({ message: 'Error fetching unverified users', error: error.message });
+    }
+};
+
+exports.verifyUser = async (req, res) => {
+    const userId = req.params.userId;
+
+    try {
+        const [user] = await db.query('SELECT username FROM Users WHERE user_id = ?', [userId]);
+        
+        if (user.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const [result] = await db.query('UPDATE Users SET is_verified = 1 WHERE user_id = ?', [userId]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        await db.query(
+            'INSERT INTO ActivityLogs (user_id, action) VALUES (?, ?)',
+            [req.user.id, `Verified user: ${user[0].username}`]
+        );
+
+        res.json({ message: 'User verified successfully' });
+    } catch (error) {
+        console.error('Error verifying user:', error);
+        res.status(500).json({ message: 'Error verifying user', error: error.message });
+    }
+};
+
+exports.assignRole = async (req, res) => {
+    const { userId, roleId } = req.body;
+    // Assign role to user
+    await assignRoleToUser(userId, roleId);
+    res.json({ message: 'Role assigned successfully' });
+  };
+
+  exports.approveResults = async (req, res) => {
+    const { resultIds } = req.body;
+    // Approve results
+    await approveResults(resultIds);
+    res.json({ message: 'Results approved successfully' });
+  };
+  
+  exports.lockResults = async (req, res) => {
+    const { classId, term, academicYear } = req.body;
+    // Lock results for a class
+    await lockResults(classId, term, academicYear);
+    res.json({ message: 'Results locked successfully' });
+  };
+
+  exports.assignSubjectToTeacher = async (req, res) => {
+    const { teacherId, subjectId } = req.body;
+  
+    try {
+      await pool.query(
+        'INSERT INTO TeacherSubject (teacher_id, subject_id) VALUES (?, ?)',
+        [teacherId, subjectId]
+      );
+  
+      res.json({ message: 'Subject assigned to teacher successfully' });
+    } catch (error) {
+      console.error('Error assigning subject to teacher:', error);
+      res.status(500).json({ message: 'Error assigning subject to teacher', error: error.message });
+    }
+  };
+  
+  exports.sendNotification = async (req, res) => {
+    const { userId, message } = req.body;
+  
+    try {
+      await createNotification(userId, message);
+      res.json({ message: 'Notification sent successfully' });
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      res.status(500).json({ message: 'Error sending notification', error: error.message });
+    }
+  };
+  

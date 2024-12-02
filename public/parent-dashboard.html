@@ -4,196 +4,499 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parent Dashboard - School Result Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
+        /* CSS styles (same as student-dashboard.html) */
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f7fa;
+            --text-color: #333;
+            --text-light: #666;
+        }
+
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            line-height: 1.6;
         }
-        h1, h2 {
-            color: #333;
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
         }
-        .card {
-            background-color: #fff;
+
+        .sidebar {
+            background: linear-gradient(to bottom, #4a90e2, #357abd);
+            color: white;
+            padding: 2rem;
+            grid-row: 1 / -1;
+        }
+
+        .sidebar h1 {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-nav a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
+            transition: background-color 0.2s;
         }
-        select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
+
+        .sidebar-nav a:hover, .sidebar-nav a.active {
+            background-color: rgba(255, 255, 255, 0.2);
         }
+
+        .sidebar-nav i {
+            margin-right: 0.5rem;
+        }
+
+        .topbar {
+            background-color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 1rem;
+        }
+
+        main {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            margin-bottom: 1rem;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
         }
+
         th, td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
+            padding: 0.75rem;
             text-align: left;
+            border-bottom: 1px solid #eee;
         }
+
         th {
-            background-color: #f2f2f2;
+            background-color: var(--secondary-color);
+            font-weight: 600;
         }
-        .tab {
-            overflow: hidden;
-            border: 1px solid #ccc;
-            background-color: #f1f1f1;
+
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.2s;
         }
-        .tab button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
+
+        .btn:hover {
+            background-color: #357abd;
         }
-        .tab button:hover {
-            background-color: #ddd;
+
+        .notification-list {
+            list-style: none;
         }
-        .tab button.active {
-            background-color: #ccc;
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
         }
-        .tabcontent {
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .profile-info p {
+            margin-bottom: 0.5rem;
+        }
+
+        #editProfileForm {
             display: none;
-            padding: 6px 12px;
-            border: 1px solid #ccc;
-            border-top: none;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Parent Dashboard</h1>
-        
-        <div class="card">
-            <h2>Child Overview</h2>
-            <select id="childSelect">
-                <option value="">Select a child</option>
-                <!-- Child options will be inserted here -->
-            </select>
-        </div>
-
-        <div id="childData" style="display: none;">
-            <div class="tab">
-                <button class="tablinks" onclick="openTab(event, 'Results')" id="defaultOpen">Results</button>
-                <button class="tablinks" onclick="openTab(event, 'Performance')">Performance</button>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <h1>Parent Dashboard</h1>
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a href="#" class="active" data-section="children-results"><i class="fas fa-chart-bar"></i> Children's Results</a></li>
+                    <li><a href="#" data-section="children-performance"><i class="fas fa-chart-line"></i> Children's Performance</a></li>
+                    <li><a href="#" data-section="notifications"><i class="fas fa-bell"></i> Notifications</a></li>
+                    <li><a href="#" data-section="profile"><i class="fas fa-user"></i> Profile</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <header class="topbar">
+            <div class="user-info">
+                <img src="https://via.placeholder.com/40" alt="Parent Avatar">
+                <span id="parentName">Parent Name</span>
             </div>
-
-            <div id="Results" class="tabcontent">
-                <h3>Results</h3>
-                <table id="resultsTable">
-                    <thead>
-                        <tr>
-                            <th>Subject</th>
-                            <th>Score</th>
-                            <th>Grade</th>
-                            <th>Term</th>
-                            <th>Academic Year</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Result rows will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div id="Performance" class="tabcontent">
-                <h3>Performance Overview</h3>
-                <table id="performanceTable">
-                    <thead>
-                        <tr>
-                            <th>Academic Year</th>
-                            <th>Term</th>
-                            <th>Average Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Performance rows will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            <button id="logoutBtn" class="btn">Logout</button>
+        </header>
+        <main id="mainContent">
+            <!-- Content will be dynamically loaded here -->
+        </main>
     </div>
 
     <script>
-        // Fetch and populate child select
-        fetch('/api/parent/children')
-            .then(response => response.json())
-            .then(data => {
-                const childSelect = document.getElementById('childSelect');
-                data.forEach(child => {
-                    const option = document.createElement('option');
-                    option.value = child.user_id;
-                    option.textContent = child.full_name;
-                    childSelect.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error fetching children:', error));
+        // JavaScript code for functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebarLinks = document.querySelectorAll('.sidebar-nav a');
+            const mainContent = document.getElementById('mainContent');
+            const logoutBtn = document.getElementById('logoutBtn');
 
-        // Fetch and display child data when selected
-        document.getElementById('childSelect').addEventListener('change', function(e) {
-            const childId = e.target.value;
-            if (childId) {
-                Promise.all([
-                    fetch(`/api/parent/results?childId=${childId}`).then(response => response.json()),
-                    fetch(`/api/parent/performance?childId=${childId}`).then(response => response.json())
-                ]).then(([resultsData, performanceData]) => {
-                    displayResults(resultsData.results);
-                    displayPerformance(performanceData);
-                    document.getElementById('childData').style.display = 'block';
-                    document.getElementById('defaultOpen').click();
-                }).catch(error => console.error('Error fetching child data:', error));
-            } else {
-                document.getElementById('childData').style.display = 'none';
-            }
+            // Load parent information
+            loadParentInfo();
+
+            // Set up navigation
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    sidebarLinks.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    loadSection(link.dataset.section);
+                });
+            });
+
+            // Logout functionality
+            logoutBtn.addEventListener('click', () => {
+                // Implement logout logic here
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
+            });
+
+            // Load children's results section by default
+            loadSection('children-results');
         });
 
-        function displayResults(results) {
-            const resultsTable = document.getElementById('resultsTable').getElementsByTagName('tbody')[0];
-            resultsTable.innerHTML = ''; // Clear existing rows
-            results.forEach(result => {
-                const row = resultsTable.insertRow();
-                row.insertCell(0).textContent = result.subject_name;
-                row.insertCell(1).textContent = result.score;
-                row.insertCell(2).textContent = result.grade;
-                row.insertCell(3).textContent = result.term;
-                row.insertCell(4).textContent = result.academic_year;
-            });
+        async function loadParentInfo() {
+            try {
+                const response = await fetch('/api/parents/profile', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                    const parentInfo = await response.json();
+                    document.getElementById('parentName').textContent = parentInfo.full_name;
+                } else {
+                    console.error('Failed to load parent information');
+                }
+            } catch (error) {
+                console.error('Error loading parent information:', error);
+            }
         }
 
-        function displayPerformance(performance) {
-            const performanceTable = document.getElementById('performanceTable').getElementsByTagName('tbody')[0];
-            performanceTable.innerHTML = ''; // Clear existing rows
-            performance.forEach(perf => {
-                const row = performanceTable.insertRow();
-                row.insertCell(0).textContent = perf.academic_year;
-                row.insertCell(1).textContent = perf.term;
-                row.insertCell(2).textContent = perf.average_score.toFixed(2);
-            });
+        async function loadSection(section) {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = '<p>Loading...</p>';
+
+            try {
+                switch (section) {
+                    case 'children-results':
+                        await loadChildrenResults();
+                        break;
+                    case 'children-performance':
+                        await loadChildrenPerformance();
+                        break;
+                    case 'notifications':
+                        await loadNotifications();
+                        break;
+                    case 'profile':
+                        await loadProfile();
+                        break;
+                    default:
+                        mainContent.innerHTML = '<p>Section not found</p>';
+                }
+            } catch (error) {
+                console.error(`Error loading section ${section}:`, error);
+                mainContent.innerHTML = `<p>Error loading ${section}. Please try again later.</p>`;
+            }
         }
 
-        function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
+        async function loadChildrenResults() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="section">
+                    <h2>Your Children's Results</h2>
+                    <div id="childrenResults">
+                        <!-- Children's results will be populated here -->
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/parents/children/results', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                    const results = await response.json();
+                    const childrenResults = document.getElementById('childrenResults');
+                    childrenResults.innerHTML = results.map(child => `
+                        <h3>${child.student_name}</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Score</th>
+                                    <th>Grade</th>
+                                    <th>Term</th>
+                                    <th>Academic Year</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${child.results.map(result => `
+                                    <tr>
+                                        <td>${result.subject_name}</td>
+                                        <td>${result.score}</td>
+                                        <td>${result.grade}</td>
+                                        <td>${result.term}</td>
+                                        <td>${result.academic_year}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                        <button class="btn" onclick="downloadChildResults('${child.student_id}')">Download Results</button>
+                    `).join('<hr>');
+                } else {
+                    throw new Error('Failed to fetch children\'s results');
+                }
+            } catch (error) {
+                console.error('Error loading children\'s results:', error);
+                mainContent.innerHTML = '<p>Error loading children\'s results. Please try again later.</p>';
             }
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+
+        async function downloadChildResults(studentId) {
+            try {
+                const response = await fetch(`/api/parents/children/${studentId}/results/download`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `child_results_${studentId}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    throw new Error('Failed to download results');
+                }
+            } catch (error) {
+                console.error('Error downloading results:', error);
+                alert('Failed to download results. Please try again.');
             }
-            document.getElementById(tabName).style.display = "block";
-            evt.currentTarget.className += " active";
+        }
+
+        async function loadChildrenPerformance() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="section">
+                    <h2>Your Children's Performance</h2>
+                    <div id="childrenPerformance">
+                        <!-- Children's performance data will be populated here -->
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/parents/children/performance', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                    const performance = await response.json();
+                    const childrenPerformance = document.getElementById('childrenPerformance');
+                    childrenPerformance.innerHTML = performance.map(child => `
+                        <h3>${child.student_name}</h3>
+                        <p><strong>Overall GPA:</strong> ${child.overallGPA.toFixed(2)}</p>
+                        <p><strong>Class Rank:</strong> ${child.classRank}</p>
+                        <p><strong>Total Subjects:</strong> ${child.totalSubjects}</p>
+                        <p><strong>Average Score:</strong> ${child.averageScore.toFixed(2)}</p>
+                    `).join('<hr>');
+                } else {
+                    throw new Error('Failed to fetch children\'s performance data');
+                }
+            } catch (error) {
+                console.error('Error loading children\'s performance:', error);
+                mainContent.innerHTML = '<p>Error loading children\'s performance data. Please try again later.</p>';
+            }
+        }
+
+        async function loadNotifications() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="section">
+                    <h2>Notifications</h2>
+                    <ul id="notificationList" class="notification-list">
+                        <!-- Notifications will be populated here -->
+                    </ul>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/parents/notifications', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                    const notifications = await response.json();
+                    const notificationList = document.getElementById('notificationList');
+                    notificationList.innerHTML = notifications.map(notification => `
+                        <li class="notification-item">
+                            <p>${notification.message}</p>
+                            <small>${new Date(notification.created_at).toLocaleString()}</small>
+                        </li>
+                    `).join('');
+                } else {
+                    throw new Error('Failed to fetch notifications');
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                mainContent.innerHTML = '<p>Error loading notifications. Please try again later.</p>';
+            }
+        }
+
+        async function loadProfile() {
+            const mainContent = document.getElementById('mainContent');
+            mainContent.innerHTML = `
+                <div class="section">
+                    <h2>Your Profile</h2>
+                    <div id="profileInfo" class="profile-info">
+                        <!-- Profile information will be populated here -->
+                    </div>
+                    <button id="editProfileBtn" class="btn">Edit Profile</button>
+                    <form id="editProfileForm">
+                        <div class="form-group">
+                            <label for="fullName">Full Name:</label>
+                            <input type="text" id="fullName" name="fullName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <button type="submit" class="btn">Save Changes</button>
+                    </form>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/auth/user-profile', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (response.ok) {
+                    const profile = await response.json();
+                    const profileInfo = document.getElementById('profileInfo');
+                    profileInfo.innerHTML = `
+                        <p><strong>Full Name:</strong> ${profile.full_name}</p>
+                        <p><strong>Email:</strong> ${profile.email}</p>
+                    `;
+
+                    const editProfileBtn = document.getElementById('editProfileBtn');
+                    const editProfileForm = document.getElementById('editProfileForm');
+
+                    editProfileBtn.addEventListener('click', () => {
+                        editProfileForm.style.display = 'block';
+                        document.getElementById('fullName').value = profile.full_name;
+                        document.getElementById('email').value = profile.email;
+                    });
+
+                    editProfileForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(editProfileForm);
+                        try {
+                            const updateResponse = await fetch('/api/auth/update-profile', {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                },
+                                body: JSON.stringify(Object.fromEntries(formData))
+                            });
+                            if (updateResponse.ok) {
+                                alert('Profile updated successfully');
+                                loadProfile();
+                            } else {
+                                throw new Error('Failed to update profile');
+                            }
+                        } catch (error) {
+                            console.error('Error updating profile:', error);
+                            alert('Failed to update profile. Please try again.');
+                        }
+                    });
+                } else {
+                    throw new Error('Failed to fetch profile information');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                mainContent.innerHTML = '<p>Error loading profile information. Please try again later.</p>';
+            }
         }
     </script>
 </body>

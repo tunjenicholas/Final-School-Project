@@ -1,6 +1,5 @@
 const nodemailer = require('nodemailer');
 
-
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: process.env.EMAIL_PORT,
@@ -14,8 +13,18 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+function getBaseUrl() {
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (!frontendUrl) {
+    console.error('FRONTEND_URL is not set in the environment variables');
+    return 'http://localhost:3000'; // Fallback URL
+  }
+  return frontendUrl;
+}
+
 exports.sendVerificationEmail = async (email, token) => {
-  const verificationLink = `${process.env.FRONTEND_URL}/verify-email/${token}`;
+  const baseUrl = getBaseUrl();
+  const verificationLink = `${baseUrl}/verify-email/${token}`;
   
   const mailOptions = {
     from: process.env.EMAIL_FROM,
@@ -33,11 +42,13 @@ exports.sendVerificationEmail = async (email, token) => {
     console.log('Verification email sent successfully');
   } catch (error) {
     console.error('Error sending verification email:', error);
+    throw error; // Re-throw the error so it can be handled by the caller
   }
 };
 
 exports.sendPasswordResetEmail = async (email, token) => {
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+  const baseUrl = getBaseUrl();
+  const resetLink = `${baseUrl}/reset-password/${token}`;
   
   const mailOptions = {
     from: process.env.EMAIL_FROM,
@@ -56,5 +67,18 @@ exports.sendPasswordResetEmail = async (email, token) => {
     console.log('Password reset email sent successfully');
   } catch (error) {
     console.error('Error sending password reset email:', error);
+    throw error; // Re-throw the error so it can be handled by the caller
+  }
+};
+
+// Add a test function to check the email configuration
+exports.testEmailConfiguration = async () => {
+  try {
+    await transporter.verify();
+    console.log('Email configuration is correct');
+    return true;
+  } catch (error) {
+    console.error('Email configuration error:', error);
+    return false;
   }
 };

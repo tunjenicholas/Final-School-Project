@@ -1,34 +1,28 @@
+const gradeRanges = [
+    { min: 80, max: 100, grade: 'A', points: 12 },
+    { min: 75, max: 79, grade: 'A-', points: 11 },
+    { min: 70, max: 74, grade: 'B+', points: 10 },
+    { min: 65, max: 69, grade: 'B', points: 9 },
+    { min: 60, max: 64, grade: 'B-', points: 8 },
+    { min: 55, max: 59, grade: 'C+', points: 7 },
+    { min: 50, max: 54, grade: 'C', points: 6 },
+    { min: 45, max: 49, grade: 'C-', points: 5 },
+    { min: 40, max: 44, grade: 'D+', points: 4 },
+    { min: 35, max: 39, grade: 'D', points: 3 },
+    { min: 30, max: 34, grade: 'D-', points: 2 },
+    { min: 0, max: 29, grade: 'E', points: 1 }
+];
+
 exports.calculateGrade = (score) => {
-    if (score > 100) return 'F';
-    if (score >= 80) return 'A';
-    if (score >= 75) return 'A-';
-    if (score >= 70) return 'B+';
-    if (score >= 65) return 'B';
-    if (score >= 60) return 'B-';
-    if (score >= 55) return 'C+';
-    if (score >= 50) return 'C';
-    if (score >= 45) return 'C-';
-    if (score >= 40) return 'D+';
-    if (score >= 35) return 'D';
-    if (score >= 30) return 'D-';
-    if (score > 0) return 'E';
-    return 'F';
-}
+    for (const range of gradeRanges) {
+        if (score >= range.min && score <= range.max) {
+            return range.grade;
+        }
+    }
+    return 'N/A';
+};
 
 exports.calculateGradePoints = (grade) => {
-    switch (grade) {
-        case 'A': return 12.0;
-        case 'A-': return 11.0;
-        case 'B+': return 10.0;
-        case 'B': return 9.0;
-        case 'B-': return 8.0;
-        case 'C+': return 7.0;
-        case 'C': return 6.0;
-        case 'C-': return 5.0;
-        case 'D+': return 4.0;
-        case 'D': return 3.0;
-        case 'D-': return 2.0;
-        case 'E': return 1.0;
-        default: return 0.0;
-    }
-}
+    const gradeInfo = gradeRanges.find(range => range.grade === grade);
+    return gradeInfo ? gradeInfo.points : 0;
+};

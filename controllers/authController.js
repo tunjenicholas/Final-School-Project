@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/email');
+const { validatePassword } = require('../utils/passwordValidator');
 
 exports.login = async (req, res) => {
   const { username, password } = req.body;
@@ -18,20 +19,18 @@ exports.login = async (req, res) => {
 
     const user = users[0];
     console.log(`User found: ${user.username}, User Type: ${user.user_type}`);
-    console.log(`Stored password hash: ${user.password}`);
     
     if (!user.password) {
       console.error('User found but password is null or undefined');
       return res.status(401).json({ message: 'Invalid username or password' });
     }
 
-    // Check if the user is active
     if (!user.is_active) {
       console.log('User account is deactivated');
       return res.status(403).json({ message: 'Your account has been deactivated. Please contact an administrator.' });
     }
 
-    console.log(`Attempting to compare password: ${password} with hash: ${user.password}`);
+    console.log(`Attempting to compare password`);
     const isMatch = await bcrypt.compare(password, user.password);
     console.log(`Password match: ${isMatch}`);
 
@@ -46,7 +45,6 @@ exports.login = async (req, res) => {
       { expiresIn: '1h' }
     );
 
-    // Store the session
     const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
     await pool.query(
       'INSERT INTO UserSessions (session_id, user_id, expires_at) VALUES (?, ?, ?)',
@@ -68,21 +66,25 @@ exports.login = async (req, res) => {
   }
 };
 
-
 exports.register = async (req, res) => {
   try {
     const { username, email, password, fullName, role } = req.body;
     
-    const [adminUser] = await pool.query('SELECT role_id FROM UserRoles WHERE user_id = ?', [req.user.userId]);
+    const [adminUser] = await pool.query('SELECT role_id FROM UserRoles WHERE user_id = ?', [req.user.id]);
     if (adminUser.length === 0 || adminUser[0].role_id !== 1) {
       return res.status(403).json({ message: 'Only administrators can register new users' });
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ message: passwordValidation.message });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '24h' });
     
     const [result] = await pool.query(
-      'INSERT INTO Users (username, email, password_hash, full_name, verification_token, is_verified) VALUES (?, ?, ?, ?, ?, FALSE)',
+      'INSERT INTO Users (username, email, password, full_name, verification_token, is_verified) VALUES (?, ?, ?, ?, ?, FALSE)',
       [username, email, hashedPassword, fullName, verificationToken]
     );
 
@@ -159,10 +161,15 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
     
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ message: passwordValidation.message });
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     
     const [result] = await pool.query(
-      'UPDATE Users SET password_hash = ?, reset_token = NULL WHERE user_id = ? AND reset_token = ?',
+      'UPDATE Users SET password = ?, reset_token = NULL WHERE user_id = ? AND reset_token = ?',
       [hashedPassword, decoded.userId, token]
     );
 
@@ -179,12 +186,12 @@ exports.resetPassword = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const { fullName, email } = req.body;
+    const userId = req.user.id;
+    const { full_name, email, username } = req.body;
 
     const [result] = await pool.query(
-      'UPDATE Users SET full_name = ?, email = ? WHERE user_id = ?',
-      [fullName, email, userId]
+      'UPDATE Users SET full_name = ?, email = ?, username = ? WHERE user_id = ?',
+      [full_name, email, username, userId]
     );
 
     if (result.affectedRows === 0) {
@@ -198,72 +205,36 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
+exports.updatePersonalInfo = async (req, res) => {
+  const { full_name, email, username } = req.body;
+  const userId = req.user.id;
+
+  try {
+    const [result] = await pool.query(
+      'UPDATE Users SET full_name = ?, email = ?, username = ? WHERE user_id = ?',
+      [full_name, email, username, userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ message: 'Personal information updated successfully' });
+  } catch (error) {
+    console.error('Error updating personal information:', error);
+    res.status(500).json({ message: 'Error updating personal information', error: error.message });
+  }
+};
+
 exports.getUserProfile = async (req, res) => {
   try {
-    const [users] = await pool.query('SELECT user_id, username, email, full_name FROM Users WHERE user_id = ?', [req.user.userId]);
+    const [users] = await pool.query('SELECT user_id, username, email, full_name, user_type FROM Users WHERE user_id = ?', [req.user.id]);
 
     if (users.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     res.json(users[0]);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.registerParent = async (req, res) => {
-  try {
-    const { email, password, fullName, studentIds } = req.body;
-    
-    // Check if email already exists
-    const [existingUsers] = await pool.query('SELECT * FROM Users WHERE email = ?', [email]);
-    if (existingUsers.length > 0) {
-      return res.status(400).json({ message: 'Email already in use' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create parent user
-    const [result] = await pool.query(
-      'INSERT INTO Users (email, password, full_name, user_type) VALUES (?, ?, ?, ?)',
-      [email, hashedPassword, fullName, 'parent']
-    );
-
-    const parentId = result.insertId;
-
-    // Link parent to students
-    for (const studentId of studentIds) {
-      await pool.query(
-        'INSERT INTO ParentStudent (parent_id, student_id) VALUES (?, ?)',
-        [parentId, studentId]
-      );
-    }
-
-    // Generate and send verification email
-    const verificationToken = jwt.sign({ userId: parentId }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    await sendVerificationEmail(email, verificationToken);
-
-    res.status(201).json({ message: 'Parent registered successfully. Please check your email to verify your account.' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.getParentStudents = async (req, res) => {
-  try {
-    const parentId = req.user.userId;
-    const [students] = await pool.query(
-      `SELECT u.user_id, u.full_name, u.email 
-       FROM Users u 
-       JOIN ParentStudent ps ON u.user_id = ps.student_id 
-       WHERE ps.parent_id = ?`,
-      [parentId]
-    );
-    res.json(students);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

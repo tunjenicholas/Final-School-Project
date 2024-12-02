@@ -10,5 +10,6 @@ router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.put('/update-profile', authenticateToken, updateProfile);
 router.get('/users', authenticateToken, authorizeAdmin, getAllUsers);
+router.post('/add-result', authenticateToken, addResultValidation, validateResult, addResult);
 
 module.exports = router;
